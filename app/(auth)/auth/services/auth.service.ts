@@ -2,6 +2,7 @@ import { api, type ApiRequestConfig } from '@/lib/api/http-client';
 import type {
   AuthTokensResponse,
   ForgotPasswordPayload,
+  ForgotPasswordResponse,
   LoginPayload,
   MessageResponse,
   RefreshPayload,
@@ -28,7 +29,7 @@ export const authService = {
     api.post<void>('/auth/logout', payload, config),
 
   forgotPassword: (payload: ForgotPasswordPayload, config?: ApiRequestConfig) =>
-    api.post<MessageResponse>('/auth/forgot-password', payload, config),
+    api.post<ForgotPasswordResponse>('/auth/forgot-password', payload, config),
 
   resetPassword: (payload: ResetPasswordPayload, config?: ApiRequestConfig) =>
     api.post<MessageResponse>('/auth/reset-password', payload, config),

@@ -40,9 +40,16 @@ export type ForgotPasswordPayload = {
   email: string;
 };
 
+/** `otpToken` must be sent back with the code; only this client can confirm it. */
+export type ForgotPasswordResponse = {
+  message: string;
+  otpToken: string;
+};
+
 export type ResetPasswordPayload = {
   email: string;
   otp: string;
+  otpToken: string;
   newPassword: string;
 };
 
