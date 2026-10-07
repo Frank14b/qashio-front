@@ -15,6 +15,7 @@ description: >-
 - **Do not run Prettier CLI** unless the user explicitly asks. Write code that matches `.prettierrc`.
 - **Do not introduce Server Actions** for API calls unless the user explicitly asks. Use the shared Axios client + feature services + React Query.
 - Prefer official Next.js App Router conventions over inventing patterns.
+- **Git push branches.** Each push must be on a **feature branch** (`feature/...`) or, for bugs, a **bugfix branch** (`fix/...` or `bugfix/...`). Never push commits directly to `main` / `master` unless the user explicitly requests it. If work is on `main`, create/checkout the appropriate branch before committing and pushing.
 
 ## Prettier (match `.prettierrc`)
 
