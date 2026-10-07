@@ -6,8 +6,9 @@ import axios, {
   type InternalAxiosRequestConfig,
 } from 'axios';
 import { getRefreshTokenFromCookie } from '@/lib/auth/session-cookies';
+import { env } from '@/lib/env';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
+const API_BASE_URL = env.NEXT_PUBLIC_API_URL;
 const DEFAULT_TIMEOUT_MS = 15_000;
 const REQUEST_ID_HEADER = 'x-request-id';
 

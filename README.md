@@ -62,11 +62,19 @@ lib/
 
 ### Environment
 
-Create `.env.local` in this folder if you need to override the API URL:
+Create `.env.local` in this folder to override defaults:
 
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:3000
+
+# Sentry (off by default; enabling requires the DSN)
+NEXT_PUBLIC_SENTRY_ENABLED=false
+# NEXT_PUBLIC_SENTRY_DSN=https://<key>@<org>.ingest.sentry.io/<project>
+# NEXT_PUBLIC_SENTRY_ENVIRONMENT=development
+# NEXT_PUBLIC_SENTRY_TRACES_SAMPLE_RATE=0
 ```
+
+Variables are validated with zod in `lib/env.ts` (http(s) URLs, Sentry DSN required when enabled); an invalid value fails `next build` / the dev server with a list of every problem. `NEXT_PUBLIC_*` values are inlined at build time, so rebuild after changing them. Sentry (`@sentry/nextjs`) reports browser errors, server request errors (`instrumentation.ts`) and root render crashes (`app/global-error.tsx`).
 
 ### Local (recommended for UI work)
 
