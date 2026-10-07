@@ -17,6 +17,7 @@ export default function NewAccountPage() {
       name: values.name,
       currencyCode: values.currencyCode.toUpperCase(),
       isDefault: values.isDefault,
+      openingBalance: values.openingBalance,
     });
     router.push('/accounts');
   };

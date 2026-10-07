@@ -16,12 +16,16 @@ type AccountFormProps = {
   onSubmit: (values: AccountFormValues) => void;
   isSubmitting?: boolean;
   defaultValues?: Partial<AccountFormValues>;
+  mode?: 'create' | 'edit';
+  submitLabel?: string;
 };
 
 export function AccountForm({
   onSubmit,
   isSubmitting = false,
   defaultValues,
+  mode = 'create',
+  submitLabel,
 }: AccountFormProps) {
   const currencies = useCurrencies();
   const form = useZodForm({
@@ -35,6 +39,8 @@ export function AccountForm({
       value: currency.code,
     })) ?? [];
 
+  const label = submitLabel ?? (mode === 'edit' ? 'Save changes' : 'Create wallet');
+
   return (
     <Form form={form} onSubmit={form.handleSubmit(onSubmit)} maxWidth={480}>
       <FormInput<AccountFormValues> name="name" label="Wallet name" autoComplete="off" autoFocus />
@@ -42,7 +48,13 @@ export function AccountForm({
         name="currencyCode"
         label="Currency"
         options={currencyOptions}
-        disabled={currencies.isLoading || currencyOptions.length === 0}
+        disabled={mode === 'edit' || currencies.isLoading || currencyOptions.length === 0}
+      />
+      <FormInput<AccountFormValues>
+        name="openingBalance"
+        label="Opening balance (before first transaction, can be negative)"
+        autoComplete="off"
+        slotProps={{ htmlInput: { inputMode: 'decimal' } }}
       />
       <Controller
         name="isDefault"
@@ -62,7 +74,7 @@ export function AccountForm({
       />
       <FormActions>
         <AppButton type="submit" disabled={isSubmitting || currencies.isLoading}>
-          {isSubmitting ? <CircularProgress size={22} color="inherit" /> : 'Create wallet'}
+          {isSubmitting ? <CircularProgress size={22} color="inherit" /> : label}
         </AppButton>
       </FormActions>
     </Form>

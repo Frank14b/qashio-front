@@ -2,14 +2,16 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { transactionsService } from '../services/transactions.service';
-import type { CreateTransactionPayload } from '../types';
 import { invalidateTransactionQueries } from './invalidate-transaction-queries';
 
-export function useCreateTransaction() {
+export function useDeleteTransaction() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (payload: CreateTransactionPayload) => transactionsService.create(payload),
-    onSuccess: () => invalidateTransactionQueries(queryClient),
+    mutationFn: (id: string) => transactionsService.remove(id),
+    onSuccess: (_result, id) => {
+      queryClient.removeQueries({ queryKey: ['transaction', id] });
+      invalidateTransactionQueries(queryClient);
+    },
   });
 }
