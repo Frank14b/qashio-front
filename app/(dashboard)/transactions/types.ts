@@ -77,6 +77,25 @@ export interface CreateTransactionPayload {
 
 export type UpdateTransactionPayload = Partial<CreateTransactionPayload>;
 
+export interface CreateTransactionOptions {
+  /** One per user action, reused on retries so the API never saves it twice. */
+  idempotencyKey: string;
+  /** Save even though the API flagged it as a possible duplicate. */
+  confirmDuplicate?: boolean;
+}
+
+/** The entry the API matched when it answers 409 `POSSIBLE_DUPLICATE`. */
+export interface PossibleDuplicate {
+  id: string;
+  reference: string;
+  type: TransactionType;
+  amount: string;
+  currencyCode: string;
+  counterparty: string | null;
+  occurredAt: string;
+  createdAt: string;
+}
+
 export interface TransactionFilters {
   dateRange: {
     startDate: Date | null;
