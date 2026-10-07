@@ -3,10 +3,25 @@ import axios, {
   type AxiosInstance,
   type AxiosRequestConfig,
   type AxiosResponse,
+  type InternalAxiosRequestConfig,
 } from 'axios';
+import { getRefreshTokenFromCookie } from '@/lib/auth/session-cookies';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
 const DEFAULT_TIMEOUT_MS = 15_000;
+
+type AuthInterceptorConfig = {
+  getAccessToken: () => string | null;
+  onTokensRefreshed: (tokens: {
+    accessToken: string;
+    refreshToken: string;
+  }) => void;
+  onAuthFailure: () => void;
+};
+
+let authConfig: AuthInterceptorConfig | null = null;
+let interceptorsAttached = false;
+let refreshPromise: Promise<string | null> | null = null;
 
 export class ApiError extends Error {
   readonly status?: number;
@@ -33,6 +48,20 @@ export class ApiError extends Error {
   }
 }
 
+export function getApiErrorMessage(error: unknown, fallback = 'Something went wrong'): string {
+  if (error instanceof ApiError) {
+    if (error.message.trim()) {
+      return error.message;
+    }
+  }
+
+  if (error instanceof Error && error.message.trim()) {
+    return error.message;
+  }
+
+  return fallback;
+}
+
 function toApiError(error: unknown): ApiError {
   if (error instanceof ApiError) {
     return error;
@@ -49,18 +78,23 @@ function toApiError(error: unknown): ApiError {
   if (error instanceof AxiosError) {
     const isTimeout = error.code === AxiosError.ETIMEDOUT || error.code === 'ECONNABORTED';
     const isCanceled = error.code === AxiosError.ERR_CANCELED;
+    const responseData = error.response?.data;
+    let message = error.message || 'Request failed';
+
+    if (typeof responseData === 'object' && responseData && 'message' in responseData) {
+      const apiMessage = (responseData as { message: unknown }).message;
+      if (typeof apiMessage === 'string') {
+        message = apiMessage;
+      } else if (Array.isArray(apiMessage)) {
+        message = apiMessage.map(String).join('. ');
+      }
+    }
 
     return new ApiError({
-      message:
-        (typeof error.response?.data === 'object' &&
-          error.response.data &&
-          'message' in error.response.data &&
-          String((error.response.data as { message: unknown }).message)) ||
-        error.message ||
-        'Request failed',
+      message,
       status: error.response?.status,
       code: error.code,
-      details: error.response?.data,
+      details: responseData,
       isCanceled,
       isTimeout,
     });
@@ -81,10 +115,86 @@ export const apiClient: AxiosInstance = axios.create({
   },
 });
 
-apiClient.interceptors.response.use(
-  (response) => response,
-  (error: unknown) => Promise.reject(toApiError(error)),
-);
+async function refreshAccessToken(): Promise<string | null> {
+  const refreshToken = getRefreshTokenFromCookie();
+  if (!refreshToken || !authConfig) {
+    authConfig?.onAuthFailure();
+    return null;
+  }
+
+  try {
+    const { data } = await axios.post<{
+      accessToken: string;
+      refreshToken: string;
+      user: { id: string; email: string; displayName: string };
+    }>(`${API_BASE_URL}/auth/refresh`, { refreshToken }, { timeout: DEFAULT_TIMEOUT_MS });
+
+    authConfig.onTokensRefreshed({
+      accessToken: data.accessToken,
+      refreshToken: data.refreshToken,
+    });
+    return data.accessToken;
+  } catch {
+    authConfig.onAuthFailure();
+    return null;
+  }
+}
+
+export function configureAuthInterceptors(config: AuthInterceptorConfig): void {
+  authConfig = config;
+
+  if (interceptorsAttached) {
+    return;
+  }
+
+  apiClient.interceptors.request.use((requestConfig: InternalAxiosRequestConfig) => {
+    const token = authConfig?.getAccessToken();
+    if (token) {
+      requestConfig.headers.Authorization = `Bearer ${token}`;
+    }
+    return requestConfig;
+  });
+
+  apiClient.interceptors.response.use(
+    (response) => response,
+    async (error: unknown) => {
+      if (!(error instanceof AxiosError) || !error.config) {
+        return Promise.reject(toApiError(error));
+      }
+
+      const original = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+      const status = error.response?.status;
+      const url = original.url ?? '';
+      const isAuthEndpoint =
+        url.includes('/auth/login') ||
+        url.includes('/auth/register') ||
+        url.includes('/auth/refresh') ||
+        url.includes('/auth/verify-email') ||
+        url.includes('/auth/forgot-password') ||
+        url.includes('/auth/reset-password');
+
+      if (status === 401 && !original._retry && !isAuthEndpoint) {
+        original._retry = true;
+
+        if (!refreshPromise) {
+          refreshPromise = refreshAccessToken().finally(() => {
+            refreshPromise = null;
+          });
+        }
+
+        const accessToken = await refreshPromise;
+        if (accessToken) {
+          original.headers.Authorization = `Bearer ${accessToken}`;
+          return apiClient.request(original);
+        }
+      }
+
+      return Promise.reject(toApiError(error));
+    },
+  );
+
+  interceptorsAttached = true;
+}
 
 export type ApiRequestConfig = AxiosRequestConfig & {
   /** AbortSignal from React Query / caller for cancellation */
