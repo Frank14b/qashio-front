@@ -4,12 +4,13 @@ const nextConfig = {
   async redirects() {
     return [
       {
+        // Keep in sync with AUTH_HOME_PATH in lib/auth/routes.ts
         source: '/',
-        destination: '/transactions',
-        permanent: true,
+        destination: '/dashboard',
+        permanent: false,
       },
     ];
   },
-}
+};
 
-module.exports = nextConfig 
+module.exports = nextConfig;
