@@ -11,6 +11,7 @@ export function useCreateAccount() {
     mutationFn: (payload: CreateAccountPayload) => accountsService.create(payload),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['accounts'] });
+      void queryClient.invalidateQueries({ queryKey: ['notifications'] });
     },
   });
 }

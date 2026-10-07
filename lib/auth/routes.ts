@@ -13,6 +13,8 @@ export const PROTECTED_PATH_PREFIXES = [
   '/dashboard',
   '/accounts',
   '/transactions',
+  '/budgets',
+  '/categories',
   '/change-password',
 ] as const;
 

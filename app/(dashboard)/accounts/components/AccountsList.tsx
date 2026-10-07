@@ -16,6 +16,7 @@ import {
 } from '@mui/material';
 import Link from 'next/link';
 import { useState } from 'react';
+import { ContentCard } from '@/app/components/ui';
 import { getErrorMessage } from '@/lib/api/get-error-message';
 import { formatMoney } from '@/lib/format/money';
 import { useAccounts } from '../hooks/useAccounts';
@@ -87,15 +88,7 @@ export function AccountsList() {
   return (
     <Stack spacing={2}>
       {actionError ? <Alert severity="error">{actionError}</Alert> : null}
-      <Box
-        sx={{
-          borderRadius: 1.5,
-          border: '1px solid',
-          borderColor: 'divider',
-          bgcolor: 'background.paper',
-          overflow: 'auto',
-        }}
-      >
+      <ContentCard sx={{ overflowX: 'auto' }}>
         <Table size="medium">
           <TableHead>
             <TableRow>
@@ -169,7 +162,7 @@ export function AccountsList() {
             })}
           </TableBody>
         </Table>
-      </Box>
+      </ContentCard>
     </Stack>
   );
 }

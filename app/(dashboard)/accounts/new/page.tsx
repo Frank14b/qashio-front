@@ -1,8 +1,9 @@
 'use client';
 
-import { Alert, Box, Button, Stack, Typography } from '@mui/material';
+import { Alert, Button } from '@mui/material';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { FormPage } from '@/app/components/ui';
 import { getErrorMessage } from '@/lib/api/get-error-message';
 import { AccountForm } from '../forms/AccountForm';
 import { useCreateAccount } from '../hooks/useCreateAccount';
@@ -23,35 +24,24 @@ export default function NewAccountPage() {
   };
 
   return (
-    <Stack spacing={3} maxWidth={560}>
-      <Box>
-        <Typography
-          component="h1"
-          sx={{
-            m: 0,
-            fontFamily: 'var(--font-display)',
-            fontWeight: 600,
-            fontSize: { xs: '2rem', md: '2.25rem' },
-          }}
-        >
-          Add wallet
-        </Typography>
-        <Typography color="text.secondary" sx={{ mt: 0.5 }}>
-          Choose a name and currency. You can mark one wallet as default.
-        </Typography>
-      </Box>
-
+    <FormPage
+      title="Add wallet"
+      subtitle="Choose a name and currency. You can mark one wallet as default."
+    >
       {createAccount.isError ? (
         <Alert severity="error">
           {getErrorMessage(createAccount.error, 'Unable to create wallet')}
         </Alert>
       ) : null}
 
-      <AccountForm onSubmit={(values) => void handleSubmit(values)} isSubmitting={createAccount.isPending} />
+      <AccountForm
+        onSubmit={(values) => void handleSubmit(values)}
+        isSubmitting={createAccount.isPending}
+      />
 
       <Button component={Link} href="/accounts" variant="text" sx={{ alignSelf: 'flex-start' }}>
         Back to accounts
       </Button>
-    </Stack>
+    </FormPage>
   );
 }

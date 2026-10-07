@@ -16,7 +16,7 @@ import { AppButton, Form, FormActions } from '@/app/components/ui';
 import { FormDatePickerField, FormInput, FormSelectField } from '@/app/components/forms/fields';
 import { useZodForm } from '@/app/components/forms/useZodForm';
 import { useAccounts } from '../../accounts/hooks/useAccounts';
-import { useCategories } from '../hooks/useCategories';
+import { useCategories } from '../../categories/hooks/useCategories';
 import {
   transactionFormDefaults,
   transactionFormSchema,
@@ -88,7 +88,7 @@ export function TransactionForm({
   const noWallets = !accounts.isLoading && accountOptions.length === 0;
 
   return (
-    <Form form={form} onSubmit={form.handleSubmit(onSubmit)} maxWidth={520}>
+    <Form form={form} onSubmit={form.handleSubmit(onSubmit)} maxWidth="100%">
       <Controller
         name="type"
         control={control}

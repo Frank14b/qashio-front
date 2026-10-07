@@ -1,15 +1,8 @@
+import type { CategoryKind } from '../categories/types';
+
 /** `income` = money in (+), `expense` = money out (−). Amounts are always positive. */
 export type TransactionType = 'income' | 'expense';
 export type TransactionStatus = 'pending' | 'completed' | 'failed';
-export type CategoryKind = 'income' | 'expense' | 'both';
-
-export interface Category {
-  id: string;
-  name: string;
-  kind: CategoryKind;
-  createdAt: string;
-  updatedAt: string;
-}
 
 export interface Transaction {
   id: string;

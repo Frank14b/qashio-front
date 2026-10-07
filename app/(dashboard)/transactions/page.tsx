@@ -3,6 +3,7 @@
 import { Box, Button, Stack, Typography } from '@mui/material';
 import Link from 'next/link';
 import { useState } from 'react';
+import { ContentCard } from '@/app/components/ui';
 import { TransactionDetailsDrawer } from './components/TransactionDetailsDrawer';
 import { TransactionFiltersBar } from './components/TransactionFiltersBar';
 import { TransactionsTable } from './components/TransactionsTable';
@@ -53,8 +54,12 @@ export default function TransactionsPage() {
         </Stack>
       </Box>
 
-      <TransactionFiltersBar />
-      <TransactionsTable onRowClick={setSelected} />
+      <ContentCard>
+        <Box sx={{ p: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
+          <TransactionFiltersBar />
+        </Box>
+        <TransactionsTable onRowClick={setSelected} />
+      </ContentCard>
       <TransactionDetailsDrawer transaction={selected} onClose={() => setSelected(null)} />
     </Stack>
   );

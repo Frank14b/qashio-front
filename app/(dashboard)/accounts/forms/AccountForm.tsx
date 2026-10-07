@@ -42,7 +42,7 @@ export function AccountForm({
   const label = submitLabel ?? (mode === 'edit' ? 'Save changes' : 'Create wallet');
 
   return (
-    <Form form={form} onSubmit={form.handleSubmit(onSubmit)} maxWidth={480}>
+    <Form form={form} onSubmit={form.handleSubmit(onSubmit)} maxWidth="100%">
       <FormInput<AccountFormValues> name="name" label="Wallet name" autoComplete="off" autoFocus />
       <FormSelectField<AccountFormValues>
         name="currencyCode"

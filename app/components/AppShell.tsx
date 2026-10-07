@@ -20,6 +20,7 @@ import { usePathname } from 'next/navigation';
 import { useState, type ReactNode } from 'react';
 import { useLogout } from '@/hooks/useAuthMutations';
 import { useAuthStore } from '@/stores/authStore';
+import { NotificationsBell } from '../(dashboard)/notifications/components/NotificationsBell';
 
 const DRAWER_WIDTH = 260;
 
@@ -68,6 +69,20 @@ const TransactionsIcon = () => (
   </NavIcon>
 );
 
+const BudgetsIcon = () => (
+  <NavIcon>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 3v9l6.4 6.4" />
+  </NavIcon>
+);
+
+const CategoriesIcon = () => (
+  <NavIcon>
+    <path d="M3 12V4a1 1 0 0 1 1-1h8l9 9-9 9z" />
+    <circle cx="7.5" cy="7.5" r="1.5" />
+  </NavIcon>
+);
+
 const PasswordIcon = () => (
   <NavIcon>
     <rect x="5" y="11" width="14" height="10" rx="1.5" />
@@ -87,6 +102,8 @@ const NAV_ITEMS = [
   { href: '/dashboard', label: 'Dashboard', icon: DashboardIcon },
   { href: '/accounts', label: 'Accounts', icon: AccountsIcon },
   { href: '/transactions', label: 'Transactions', icon: TransactionsIcon },
+  { href: '/budgets', label: 'Budgets', icon: BudgetsIcon },
+  { href: '/categories', label: 'Categories', icon: CategoriesIcon },
   { href: '/change-password', label: 'Change password', icon: PasswordIcon },
 ] as const;
 
@@ -126,6 +143,11 @@ export function AppShell({ children }: AppShellProps) {
         >
           Qashio
         </Typography>
+        {isDesktop ? (
+          <Box sx={{ ml: 'auto' }}>
+            <NotificationsBell />
+          </Box>
+        ) : null}
       </Toolbar>
       <Divider sx={{ borderColor: 'rgba(255,255,255,0.08)' }} />
       <List sx={{ px: 1.5, py: 2, flex: 1 }}>
@@ -215,6 +237,9 @@ export function AppShell({ children }: AppShellProps) {
           <Typography sx={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: '1.25rem' }}>
             Qashio
           </Typography>
+          <Box sx={{ ml: 'auto' }}>
+            <NotificationsBell />
+          </Box>
         </Toolbar>
       ) : null}
 

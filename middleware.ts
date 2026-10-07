@@ -42,6 +42,8 @@ export const config = {
     '/dashboard/:path*',
     '/accounts/:path*',
     '/transactions/:path*',
+    '/budgets/:path*',
+    '/categories/:path*',
     '/change-password/:path*',
     '/auth/:path*',
   ],

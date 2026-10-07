@@ -5,7 +5,7 @@ import { debounce } from '@mui/material/utils';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { useEffect, useMemo, useState } from 'react';
 import { useAccounts } from '../../accounts/hooks/useAccounts';
-import { useCategories } from '../hooks/useCategories';
+import { useCategories } from '../../categories/hooks/useCategories';
 import { useTransactionFilters } from '../hooks/useTransactionFilters';
 import type { TransactionType } from '../types';
 

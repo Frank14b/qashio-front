@@ -13,6 +13,7 @@ export function useUpdateAccount() {
     onSuccess: (_account, variables) => {
       void queryClient.invalidateQueries({ queryKey: ['accounts'] });
       void queryClient.invalidateQueries({ queryKey: ['account', variables.id] });
+      void queryClient.invalidateQueries({ queryKey: ['notifications'] });
     },
   });
 }

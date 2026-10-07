@@ -1,6 +1,6 @@
 'use client';
 
-import { Alert, Box, Button, Stack, Typography } from '@mui/material';
+import { Alert, Button, Stack, Typography } from '@mui/material';
 import { DataGrid, type GridColDef, type GridSortModel } from '@mui/x-data-grid';
 import { format } from 'date-fns';
 import Link from 'next/link';
@@ -104,54 +104,53 @@ export function TransactionsTable({ onRowClick }: TransactionsTableProps) {
 
   if (transactions.isError && !transactions.data) {
     return (
-      <Alert severity="error">
+      <Alert severity="error" sx={{ m: 2 }}>
         {getErrorMessage(transactions.error, 'Unable to load transactions')}
       </Alert>
     );
   }
 
   return (
-    <Stack spacing={1.5}>
+    <>
       {transactions.isError ? (
-        <Alert severity="warning">
+        <Alert severity="warning" sx={{ m: 2 }}>
           {getErrorMessage(transactions.error, 'Refreshing transactions failed; showing last results')}
         </Alert>
       ) : null}
-      <Box sx={{ bgcolor: 'background.paper', borderRadius: 1.5, minHeight: 420 }}>
-        <DataGrid
-          rows={transactions.data?.items ?? []}
-          columns={columns}
-          rowCount={transactions.data?.meta.total ?? 0}
-          loading={transactions.isFetching}
-          paginationMode="server"
-          sortingMode="server"
-          filterMode="server"
-          disableColumnFilter
-          disableRowSelectionOnClick
-          pageSizeOptions={[TRANSACTIONS_PAGE_SIZE]}
-          paginationModel={{ page, pageSize: TRANSACTIONS_PAGE_SIZE }}
-          onPaginationModelChange={(model) => setPage(model.page)}
-          sortModel={sortModel}
-          onSortModelChange={(model) => {
-            const [first] = model;
-            const field = first?.field as TransactionSortField | undefined;
-            setSort(
-              first && field && SORTABLE_FIELDS.includes(field)
-                ? { field, order: first.sort === 'asc' ? 'ASC' : 'DESC' }
-                : null,
-            );
-          }}
-          onRowClick={({ row }) => onRowClick(row)}
-          slots={{ noRowsOverlay: NoTransactionsOverlay }}
-          slotProps={{ loadingOverlay: { variant: 'skeleton', noRowsVariant: 'skeleton' } }}
-          sx={{
-            border: '1px solid',
-            borderColor: 'divider',
-            minHeight: 420,
-            '& .MuiDataGrid-row': { cursor: 'pointer' },
-          }}
-        />
-      </Box>
-    </Stack>
+      <DataGrid
+        rows={transactions.data?.items ?? []}
+        columns={columns}
+        rowCount={transactions.data?.meta.total ?? 0}
+        loading={transactions.isFetching}
+        paginationMode="server"
+        sortingMode="server"
+        filterMode="server"
+        disableColumnFilter
+        disableRowSelectionOnClick
+        pageSizeOptions={[TRANSACTIONS_PAGE_SIZE]}
+        paginationModel={{ page, pageSize: TRANSACTIONS_PAGE_SIZE }}
+        onPaginationModelChange={(model) => setPage(model.page)}
+        sortModel={sortModel}
+        onSortModelChange={(model) => {
+          const [first] = model;
+          const field = first?.field as TransactionSortField | undefined;
+          setSort(
+            first && field && SORTABLE_FIELDS.includes(field)
+              ? { field, order: first.sort === 'asc' ? 'ASC' : 'DESC' }
+              : null,
+          );
+        }}
+        onRowClick={({ row }) => onRowClick(row)}
+        slots={{ noRowsOverlay: NoTransactionsOverlay }}
+        slotProps={{ loadingOverlay: { variant: 'skeleton', noRowsVariant: 'skeleton' } }}
+        // Sits flush inside the page's ContentCard, which provides border and background.
+        sx={{
+          border: 0,
+          borderRadius: 0,
+          minHeight: 420,
+          '& .MuiDataGrid-row': { cursor: 'pointer' },
+        }}
+      />
+    </>
   );
 }

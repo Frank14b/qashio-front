@@ -1,9 +1,9 @@
 'use client';
 
-import { Alert, Box, CircularProgress, Stack, Typography } from '@mui/material';
+import { Alert, CircularProgress, Stack, Typography } from '@mui/material';
 import Link from 'next/link';
 import { useState } from 'react';
-import { Form, AppButton } from '@/app/components/ui';
+import { Form, FormPage, AppButton } from '@/app/components/ui';
 import { FormInput, FormPasswordField } from '@/app/components/forms/fields';
 import { useZodForm } from '@/app/components/forms/useZodForm';
 import { getErrorMessage } from '@/lib/api/get-error-message';
@@ -80,24 +80,10 @@ export function ChangePasswordForm() {
   });
 
   return (
-    <Stack spacing={3} maxWidth={520}>
-      <Box>
-        <Typography
-          component="h1"
-          sx={{
-            m: 0,
-            fontFamily: 'var(--font-display)',
-            fontWeight: 600,
-            fontSize: { xs: '2rem', md: '2.25rem' },
-          }}
-        >
-          Change password
-        </Typography>
-        <Typography color="text.secondary" sx={{ mt: 0.5 }}>
-          Confirm your current password, then enter the email code and a new password.
-        </Typography>
-      </Box>
-
+    <FormPage
+      title="Change password"
+      subtitle="Confirm your current password, then enter the email code and a new password."
+    >
       {notice ? <Alert severity="success">{notice}</Alert> : null}
       {error ? <Alert severity="error">{error}</Alert> : null}
 
@@ -176,6 +162,6 @@ export function ChangePasswordForm() {
       <AppButton component={Link} href="/dashboard" variant="text" sx={{ alignSelf: 'flex-start' }}>
         Back to dashboard
       </AppButton>
-    </Stack>
+    </FormPage>
   );
 }
