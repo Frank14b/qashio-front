@@ -42,7 +42,7 @@ export function AuthShell({
           display: 'grid',
           gridTemplateColumns: { xs: '1fr', md: 'minmax(280px, 2fr) 3fr' },
           overflow: 'hidden',
-          borderRadius: '16px',
+          borderRadius: '8px',
           border: '1px solid',
           borderColor: 'rgba(15, 23, 42, 0.12)',
           bgcolor: 'background.paper',

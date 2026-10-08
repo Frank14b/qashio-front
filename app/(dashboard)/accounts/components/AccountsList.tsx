@@ -15,11 +15,18 @@ import {
   Typography,
 } from '@mui/material';
 import Link from 'next/link';
+import { useState } from 'react';
+import { ContentCard } from '@/app/components/ui';
 import { getErrorMessage } from '@/lib/api/get-error-message';
+import { formatMoney } from '@/lib/format/money';
 import { useAccounts } from '../hooks/useAccounts';
+import { useUpdateAccount } from '../hooks/useUpdateAccount';
 
 export function AccountsList() {
   const accounts = useAccounts();
+  const updateAccount = useUpdateAccount();
+  const [archivingId, setArchivingId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   if (accounts.isLoading) {
     return (
@@ -42,7 +49,7 @@ export function AccountsList() {
       <Box
         sx={{
           p: 4,
-          borderRadius: 3,
+          borderRadius: 1.5,
           border: '1px dashed',
           borderColor: 'divider',
           textAlign: 'center',
@@ -59,47 +66,103 @@ export function AccountsList() {
     );
   }
 
+  const handleArchive = async (id: string, name: string) => {
+    const confirmed = window.confirm(
+      `Archive “${name}”? It will be hidden from the active wallets list.`,
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    setActionError(null);
+    setArchivingId(id);
+    try {
+      await updateAccount.mutateAsync({ id, payload: { archive: true } });
+    } catch (error) {
+      setActionError(getErrorMessage(error, 'Unable to archive wallet'));
+    } finally {
+      setArchivingId(null);
+    }
+  };
+
   return (
-    <Box
-      sx={{
-        borderRadius: 3,
-        border: '1px solid',
-        borderColor: 'divider',
-        bgcolor: 'background.paper',
-        overflow: 'auto',
-      }}
-    >
-      <Table size="medium">
-        <TableHead>
-          <TableRow>
-            <TableCell>Name</TableCell>
-            <TableCell>Currency</TableCell>
-            <TableCell>Status</TableCell>
-            <TableCell>Created</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {rows.map((account) => (
-            <TableRow key={account.id} hover>
-              <TableCell>
-                <Stack direction="row" spacing={1} alignItems="center">
-                  <Typography fontWeight={600}>{account.name}</Typography>
-                  {account.isDefault ? <Chip size="small" label="Default" color="primary" /> : null}
-                </Stack>
-              </TableCell>
-              <TableCell>{account.currencyCode}</TableCell>
-              <TableCell>{account.archivedAt ? 'Archived' : 'Active'}</TableCell>
-              <TableCell>
-                {new Date(account.createdAt).toLocaleDateString(undefined, {
-                  year: 'numeric',
-                  month: 'short',
-                  day: 'numeric',
-                })}
-              </TableCell>
+    <Stack spacing={2}>
+      {actionError ? <Alert severity="error">{actionError}</Alert> : null}
+      <ContentCard sx={{ overflowX: 'auto' }}>
+        <Table size="medium">
+          <TableHead>
+            <TableRow>
+              <TableCell>Name</TableCell>
+              <TableCell>Currency</TableCell>
+              <TableCell align="right">Balance</TableCell>
+              <TableCell>Status</TableCell>
+              <TableCell>Created</TableCell>
+              <TableCell align="right">Actions</TableCell>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </Box>
+          </TableHead>
+          <TableBody>
+            {rows.map((account) => {
+              const busy = archivingId === account.id;
+              return (
+                <TableRow key={account.id} hover>
+                  <TableCell>
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      <Typography fontWeight={600}>{account.name}</Typography>
+                      {account.isDefault ? (
+                        <Chip size="small" label="Default" color="primary" />
+                      ) : null}
+                    </Stack>
+                  </TableCell>
+                  <TableCell>{account.currencyCode}</TableCell>
+                  <TableCell
+                    align="right"
+                    title={`Opening balance ${formatMoney(account.openingBalance, account.currencyCode)}`}
+                    sx={{
+                      fontWeight: 600,
+                      fontVariantNumeric: 'tabular-nums',
+                      color: account.balance.startsWith('-') ? 'error.main' : 'text.primary',
+                    }}
+                  >
+                    {formatMoney(account.balance, account.currencyCode)}
+                  </TableCell>
+                  <TableCell>{account.archivedAt ? 'Archived' : 'Active'}</TableCell>
+                  <TableCell>
+                    {new Date(account.createdAt).toLocaleDateString(undefined, {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                    })}
+                  </TableCell>
+                  <TableCell align="right">
+                    <Stack direction="row" spacing={1} justifyContent="flex-end">
+                      <Button
+                        component={Link}
+                        href={`/accounts/${account.id}/edit`}
+                        size="small"
+                        variant="outlined"
+                        disabled={busy}
+                      >
+                        Edit
+                      </Button>
+                      {!account.archivedAt ? (
+                        <Button
+                          size="small"
+                          color="error"
+                          variant="text"
+                          disabled={busy || updateAccount.isPending}
+                          onClick={() => void handleArchive(account.id, account.name)}
+                        >
+                          {busy ? 'Archiving…' : 'Delete'}
+                        </Button>
+                      ) : null}
+                    </Stack>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </ContentCard>
+    </Stack>
   );
 }

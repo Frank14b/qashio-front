@@ -3,22 +3,33 @@
 import { Box, Button, Stack, Typography } from '@mui/material';
 import Link from 'next/link';
 import { useAuthStore } from '@/stores/authStore';
+import { MonthSummary } from '../transactions/components/MonthSummary';
 
 const QUICK_ACTIONS = [
   {
-    href: '/accounts/new',
-    title: 'Add wallet',
-    description: 'Create a cash, bank, or card account.',
+    href: '/transactions/new?type=income',
+    title: 'Add income',
+    description: 'Record money coming into a wallet.',
+  },
+  {
+    href: '/transactions/new?type=expense',
+    title: 'Add expense',
+    description: 'Record money going out of a wallet.',
+  },
+  {
+    href: '/transactions',
+    title: 'View transactions',
+    description: 'Search, filter and review every entry.',
   },
   {
     href: '/accounts',
     title: 'View accounts',
-    description: 'See every wallet and which one is default.',
+    description: 'See every wallet, its balance and which one is default.',
   },
   {
-    href: '/transactions/new',
-    title: 'New transaction',
-    description: 'Record income or spending.',
+    href: '/accounts/new',
+    title: 'Add wallet',
+    description: 'Create a cash, bank, or card account.',
   },
   {
     href: '/change-password',
@@ -50,6 +61,8 @@ export default function DashboardPage() {
         </Typography>
       </Box>
 
+      <MonthSummary />
+
       <Box>
         <Typography
           component="h2"
@@ -78,7 +91,7 @@ export default function DashboardPage() {
               key={action.href}
               sx={{
                 p: 2.5,
-                borderRadius: 3,
+                borderRadius: 1.5,
                 border: '1px solid',
                 borderColor: 'divider',
                 bgcolor: 'background.paper',

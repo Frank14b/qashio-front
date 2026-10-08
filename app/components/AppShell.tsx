@@ -8,6 +8,7 @@ import {
   IconButton,
   List,
   ListItemButton,
+  ListItemIcon,
   ListItemText,
   Toolbar,
   Typography,
@@ -19,14 +20,91 @@ import { usePathname } from 'next/navigation';
 import { useState, type ReactNode } from 'react';
 import { useLogout } from '@/hooks/useAuthMutations';
 import { useAuthStore } from '@/stores/authStore';
+import { NotificationsBell } from '../(dashboard)/notifications/components/NotificationsBell';
 
 const DRAWER_WIDTH = 260;
 
+function NavIcon({ children }: { children: ReactNode }) {
+  return (
+    <svg
+      width={20}
+      height={20}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.75}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+      style={{ display: 'block' }}
+    >
+      {children}
+    </svg>
+  );
+}
+
+const DashboardIcon = () => (
+  <NavIcon>
+    <rect x="3" y="3" width="7" height="9" rx="1" />
+    <rect x="14" y="3" width="7" height="5" rx="1" />
+    <rect x="14" y="12" width="7" height="9" rx="1" />
+    <rect x="3" y="16" width="7" height="5" rx="1" />
+  </NavIcon>
+);
+
+const AccountsIcon = () => (
+  <NavIcon>
+    <rect x="2" y="5" width="20" height="14" rx="1.5" />
+    <path d="M2 10h20" />
+    <path d="M6 15h4" />
+  </NavIcon>
+);
+
+const TransactionsIcon = () => (
+  <NavIcon>
+    <path d="M8 7h11" />
+    <path d="M16 4l3 3-3 3" />
+    <path d="M16 17H5" />
+    <path d="M8 20l-3-3 3-3" />
+  </NavIcon>
+);
+
+const BudgetsIcon = () => (
+  <NavIcon>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 3v9l6.4 6.4" />
+  </NavIcon>
+);
+
+const CategoriesIcon = () => (
+  <NavIcon>
+    <path d="M3 12V4a1 1 0 0 1 1-1h8l9 9-9 9z" />
+    <circle cx="7.5" cy="7.5" r="1.5" />
+  </NavIcon>
+);
+
+const PasswordIcon = () => (
+  <NavIcon>
+    <rect x="5" y="11" width="14" height="10" rx="1.5" />
+    <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+  </NavIcon>
+);
+
+const MenuIcon = () => (
+  <NavIcon>
+    <path d="M4 7h16" />
+    <path d="M4 12h16" />
+    <path d="M4 17h16" />
+  </NavIcon>
+);
+
 const NAV_ITEMS = [
-  { href: '/dashboard', label: 'Dashboard' },
-  { href: '/accounts', label: 'Accounts' },
-  { href: '/transactions', label: 'Transactions' },
-  { href: '/change-password', label: 'Change password' },
+  { href: '/dashboard', label: 'Dashboard', icon: DashboardIcon },
+  { href: '/accounts', label: 'Accounts', icon: AccountsIcon },
+  { href: '/transactions', label: 'Transactions', icon: TransactionsIcon },
+  { href: '/budgets', label: 'Budgets', icon: BudgetsIcon },
+  { href: '/categories', label: 'Categories', icon: CategoriesIcon },
+  { href: '/change-password', label: 'Change password', icon: PasswordIcon },
 ] as const;
 
 type AppShellProps = {
@@ -65,6 +143,11 @@ export function AppShell({ children }: AppShellProps) {
         >
           Qashio
         </Typography>
+        {isDesktop ? (
+          <Box sx={{ ml: 'auto' }}>
+            <NotificationsBell />
+          </Box>
+        ) : null}
       </Toolbar>
       <Divider sx={{ borderColor: 'rgba(255,255,255,0.08)' }} />
       <List sx={{ px: 1.5, py: 2, flex: 1 }}>
@@ -72,6 +155,7 @@ export function AppShell({ children }: AppShellProps) {
           const selected =
             pathname === item.href ||
             (item.href !== '/dashboard' && pathname.startsWith(`${item.href}/`));
+          const Icon = item.icon;
 
           return (
             <ListItemButton
@@ -82,7 +166,7 @@ export function AppShell({ children }: AppShellProps) {
               onClick={() => setMobileOpen(false)}
               sx={{
                 mb: 0.5,
-                borderRadius: 2,
+                borderRadius: 1,
                 color: 'rgba(255,255,255,0.82)',
                 '&.Mui-selected': {
                   bgcolor: 'rgba(15, 118, 110, 0.35)',
@@ -92,6 +176,9 @@ export function AppShell({ children }: AppShellProps) {
                 '&:hover': { bgcolor: 'rgba(255,255,255,0.06)' },
               }}
             >
+              <ListItemIcon sx={{ minWidth: 40, color: 'inherit' }}>
+                <Icon />
+              </ListItemIcon>
               <ListItemText
                 primary={item.label}
                 primaryTypographyProps={{ fontWeight: selected ? 700 : 500 }}
@@ -145,13 +232,14 @@ export function AppShell({ children }: AppShellProps) {
             aria-label="Open menu"
             sx={{ mr: 1 }}
           >
-            <Box component="span" sx={{ fontSize: '1.25rem', fontWeight: 700 }}>
-              ☰
-            </Box>
+            <MenuIcon />
           </IconButton>
           <Typography sx={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: '1.25rem' }}>
             Qashio
           </Typography>
+          <Box sx={{ ml: 'auto' }}>
+            <NotificationsBell />
+          </Box>
         </Toolbar>
       ) : null}
 

@@ -6,9 +6,11 @@ import axios, {
   type InternalAxiosRequestConfig,
 } from 'axios';
 import { getRefreshTokenFromCookie } from '@/lib/auth/session-cookies';
+import { env } from '@/lib/env';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
+const API_BASE_URL = env.NEXT_PUBLIC_API_URL;
 const DEFAULT_TIMEOUT_MS = 15_000;
+const REQUEST_ID_HEADER = 'x-request-id';
 
 type AuthInterceptorConfig = {
   getAccessToken: () => string | null;
@@ -29,6 +31,8 @@ export class ApiError extends Error {
   readonly details?: unknown;
   readonly isCanceled: boolean;
   readonly isTimeout: boolean;
+  /** Server request id (X-Request-Id) to find this failure in the API logs. */
+  readonly requestId?: string;
 
   constructor(params: {
     message: string;
@@ -37,6 +41,7 @@ export class ApiError extends Error {
     details?: unknown;
     isCanceled?: boolean;
     isTimeout?: boolean;
+    requestId?: string;
   }) {
     super(params.message);
     this.name = 'ApiError';
@@ -45,6 +50,7 @@ export class ApiError extends Error {
     this.details = params.details;
     this.isCanceled = params.isCanceled ?? false;
     this.isTimeout = params.isTimeout ?? false;
+    this.requestId = params.requestId;
   }
 }
 
@@ -90,6 +96,7 @@ function toApiError(error: unknown): ApiError {
       }
     }
 
+    const requestIdHeader: unknown = error.response?.headers?.[REQUEST_ID_HEADER];
     return new ApiError({
       message,
       status: error.response?.status,
@@ -97,6 +104,7 @@ function toApiError(error: unknown): ApiError {
       details: responseData,
       isCanceled,
       isTimeout,
+      requestId: typeof requestIdHeader === 'string' ? requestIdHeader : undefined,
     });
   }
 
@@ -113,6 +121,17 @@ export const apiClient: AxiosInstance = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+});
+
+// One id per user action: the API logs every operation of the request under it.
+// Kept when the same config is retried after a token refresh, so the retry
+// shares the original id. randomUUID needs a secure context (https/localhost);
+// without it the API generates the id.
+apiClient.interceptors.request.use((requestConfig: InternalAxiosRequestConfig) => {
+  if (!requestConfig.headers.has(REQUEST_ID_HEADER) && globalThis.crypto?.randomUUID) {
+    requestConfig.headers.set(REQUEST_ID_HEADER, globalThis.crypto.randomUUID());
+  }
+  return requestConfig;
 });
 
 async function refreshAccessToken(): Promise<string | null> {

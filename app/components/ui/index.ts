@@ -15,3 +15,8 @@ export type { FormProps } from './Form';
 
 export { FormActions } from './FormActions';
 export type { FormActionsProps } from './FormActions';
+
+export { FormPage } from './FormPage';
+export type { FormPageProps } from './FormPage';
+
+export { ContentCard } from './ContentCard';

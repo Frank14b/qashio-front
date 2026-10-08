@@ -3,6 +3,10 @@
 import { useMutation } from '@tanstack/react-query';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { authService } from '@/app/(auth)/auth/services/auth.service';
+import {
+  clearPasswordResetToken,
+  savePasswordResetToken,
+} from '@/app/(auth)/auth/services/password-reset-token';
 import type {
   ForgotPasswordPayload,
   LoginPayload,
@@ -77,7 +81,8 @@ export function useForgotPassword() {
 
   return useMutation({
     mutationFn: (payload: ForgotPasswordPayload) => authService.forgotPassword(payload),
-    onSuccess: (_result, variables) => {
+    onSuccess: (result, variables) => {
+      savePasswordResetToken(variables.email, result.otpToken);
       router.push(`/auth/reset-password?email=${encodeURIComponent(variables.email)}`);
     },
   });
@@ -89,6 +94,7 @@ export function useResetPassword() {
   return useMutation({
     mutationFn: (payload: ResetPasswordPayload) => authService.resetPassword(payload),
     onSuccess: () => {
+      clearPasswordResetToken();
       router.replace('/auth/login?reset=1');
     },
   });

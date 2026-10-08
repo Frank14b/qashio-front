@@ -1,16 +1,37 @@
 import { api, type ApiRequestConfig } from '@/lib/api/http-client';
-import type { CreateTransactionPayload, Transaction } from '../types';
+import type {
+  CreateTransactionOptions,
+  CreateTransactionPayload,
+  Transaction,
+  TransactionList,
+  TransactionListParams,
+  TransactionSummary,
+  TransactionSummaryParams,
+  UpdateTransactionPayload,
+} from '../types';
 
 export const transactionsService = {
-  getAll: (config?: ApiRequestConfig) => api.get<Transaction[]>('/transactions', config),
+  list: (params: TransactionListParams, config?: ApiRequestConfig) =>
+    api.get<TransactionList>('/transactions', { ...config, params }),
 
   getById: (id: string, config?: ApiRequestConfig) =>
     api.get<Transaction>(`/transactions/${id}`, config),
 
-  create: (payload: CreateTransactionPayload, config?: ApiRequestConfig) =>
-    api.post<Transaction>('/transactions', payload, config),
+  summary: (params: TransactionSummaryParams, config?: ApiRequestConfig) =>
+    api.get<TransactionSummary[]>('/transactions/summary', { ...config, params }),
 
-  update: (id: string, payload: Partial<CreateTransactionPayload>, config?: ApiRequestConfig) =>
+  create: (
+    payload: CreateTransactionPayload,
+    { idempotencyKey, confirmDuplicate }: CreateTransactionOptions,
+    config?: ApiRequestConfig,
+  ) =>
+    api.post<Transaction>(
+      '/transactions',
+      confirmDuplicate ? { ...payload, confirmDuplicate } : payload,
+      { ...config, headers: { ...config?.headers, 'Idempotency-Key': idempotencyKey } },
+    ),
+
+  update: (id: string, payload: UpdateTransactionPayload, config?: ApiRequestConfig) =>
     api.put<Transaction>(`/transactions/${id}`, payload, config),
 
   remove: (id: string, config?: ApiRequestConfig) =>

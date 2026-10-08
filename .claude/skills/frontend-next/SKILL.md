@@ -15,6 +15,9 @@ description: >-
 - **Do not run Prettier CLI** unless the user explicitly asks. Write code that matches `.prettierrc`.
 - **Do not introduce Server Actions** for API calls unless the user explicitly asks. Use the shared Axios client + feature services + React Query.
 - Prefer official Next.js App Router conventions over inventing patterns.
+- **Check before writing a util.** Before creating any helper/utility (formatting, parsing, validation, money/decimal math, dates, ids, crypto, retries…), first check for (1) a built-in Node.js / Web API (`crypto.randomInt`, `crypto.randomUUID`, `Intl.NumberFormat`, `structuredClone`, `node:util`…), (2) something the framework/deps already ship (class-validator, class-transformer, NestJS pipes, TypeORM, Zod, MUI, date libs), then (3) a well-maintained npm package (e.g. `decimal.js` for money). Only hand-roll it when none fits, and say why in a short comment.
+- **Test only critical features.** Write tests for logic where a bug would mislead the user about money or break a core flow: money formatting/parsing, form schemas for money and cross-field rules, payload builders sent to the API, and auth/session handling. Do **not** write tests for presentational components, layout, simple hooks that only wrap a service call, or static copy — verify those in the running app.
+- **Git push branches.** Each push must be on a **feature branch** (`feature/...`) or, for bugs, a **bugfix branch** (`fix/...` or `bugfix/...`). Never push commits directly to `main` / `master` unless the user explicitly requests it. If work is on `main`, create/checkout the appropriate branch before committing and pushing.
 
 ## Prettier (match `.prettierrc`)
 
@@ -86,6 +89,12 @@ app/(dashboard)/<feature>/
 - Feature code stays inside that feature folder.
 - Cross-feature reuse goes to `app/components/ui` or `app/components/forms`.
 - Session store: `app/stores/authStore.ts`. Auth API helpers: under `(auth)/auth/`.
+
+## Validation placement (required)
+
+- Form input rules live in the feature's Zod schema (`forms/*.schema.ts`): required, format, ranges and cross-field rules (`.refine` / `.superRefine` with a `path`). Do not validate in submit handlers or components.
+- Mirror the API's DTO rules where they are knowable client-side, but keep the API as the source of truth: rules that need server data (ownership, currency scale, duplicates) come back as API errors and are shown with `getErrorMessage` in an `Alert`.
+- Keep money as strings end-to-end (regex in Zod, never `z.coerce.number()` for amounts).
 
 ## Shared layer
 

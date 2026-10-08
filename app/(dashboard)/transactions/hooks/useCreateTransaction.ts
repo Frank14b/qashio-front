@@ -2,15 +2,18 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { transactionsService } from '../services/transactions.service';
-import type { CreateTransactionPayload } from '../types';
+import type { CreateTransactionOptions, CreateTransactionPayload } from '../types';
+import { invalidateTransactionQueries } from './invalidate-transaction-queries';
 
 export function useCreateTransaction() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (payload: CreateTransactionPayload) => transactionsService.create(payload),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['transactions'] });
-    },
+    mutationFn: ({
+      payload,
+      ...options
+    }: CreateTransactionOptions & { payload: CreateTransactionPayload }) =>
+      transactionsService.create(payload, options),
+    onSuccess: () => invalidateTransactionQueries(queryClient),
   });
 }
