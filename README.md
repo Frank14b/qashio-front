@@ -1,6 +1,6 @@
 # Qashio Frontend
 
-Next.js frontend for the Qashio expense tracker. Talks to the NestJS API for transactions, categories, and budgets.
+Next.js web app for the Qashio expense tracker. It covers wallets, income and expenses, categories, budgets and notifications, on top of the NestJS API in `../qashio-api`.
 
 ---
 
@@ -8,47 +8,43 @@ Next.js frontend for the Qashio expense tracker. Talks to the NestJS API for tra
 
 | Area | Choice |
 |------|--------|
-| Framework | Next.js 15 (App Router) |
-| Language | TypeScript |
-| UI | MUI v7 (DataGrid, Dialogs, Date Pickers) |
+| Framework | Next.js 15 (App Router), React, TypeScript |
+| UI | MUI 7 (DataGrid in server mode, Date Pickers, Dialogs) |
 | Server state | TanStack React Query |
-| Client UI state | Zustand |
-| Forms | React Hook Form + Zod + FormProvider / Controller |
-| HTTP | Axios (shared client: timeout + AbortSignal cancellation) |
-| Quality | ESLint, Prettier, Husky, lint-staged |
+| Client state | Zustand (auth session, list filters) |
+| Forms | React Hook Form + Zod |
+| HTTP | Axios client with timeout, cancellation, `X-Request-Id`, token refresh |
+| Money / dates | `Intl.NumberFormat` (currency minor units), `Intl.RelativeTimeFormat` |
+| Monitoring | `@sentry/nextjs` (off by default) |
+| Quality | Jest, ESLint, Prettier, Husky + lint-staged |
 
 ---
 
 ## Project structure
 
-Feature-module layout (similar to Angular feature modules):
-
 ```text
 app/
-  (features)/
-    transactions/          # feature module
-      components/          # feature-specific UI (table, filters, …)
-      forms/               # Zod schema + TransactionForm
-      hooks/               # React Query + filter hooks
-      services/            # API calls for this feature
-      stores/              # Zustand (filters, etc.)
-      types.ts
-      page.tsx             # list view
-      new/page.tsx         # create view
-      layout.tsx
+  (auth)/auth/               # login, register, verify-email, forgot / reset password
+  (dashboard)/               # authenticated area (AppShell + nav + notifications bell)
+    dashboard/  accounts/  transactions/  budgets/  categories/  notifications/  change-password/
+      components/  forms/  hooks/  services/  stores/  types.ts   # each feature owns its parts
   components/
-    ui/                    # shared Input, Select, Form, Button, …
-    PageLayout.tsx
-    NavBar.tsx
-  forms/
-    useZodForm.ts          # shared RHF + Zod helper
-    fields/                # FormInput / FormSelectField / FormDatePickerField
-  providers.tsx
+    ui/                      # shared Input, Select, Button, FormPage (centered card), ContentCard
+    forms/                   # RHF field bindings + useZodForm
+    AppShell.tsx  NavBar.tsx
+  hooks/  stores/            # auth session + mutations
+  global-error.tsx           # root error boundary (reports to Sentry)
 lib/
-  api/http-client.ts       # shared Axios client
+  api/http-client.ts         # Axios instance, ApiError, refresh + retry
+  auth/                      # cookie session helpers, protected route list
+  env.ts                     # zod-validated NEXT_PUBLIC_* variables
+  format/money.ts            # Intl currency formatting
+  sentry/config.ts
+middleware.ts                # redirects between auth pages and the dashboard
+instrumentation*.ts          # Sentry (browser + server)
 ```
 
-**Rule of thumb:** feature owns schema, types, services, and views. `components/ui` and `lib/api` stay shared.
+**Rule of thumb:** each feature owns its schema, types, services, hooks and views. Only `app/components/ui`, `app/components/forms` and `lib/` are shared.
 
 ---
 
@@ -56,13 +52,12 @@ lib/
 
 ### Prerequisites
 
-- Node.js 18+
-- npm
-- Running backend API (default `http://localhost:3000`)
+- Node.js 22
+- The API running (default `http://localhost:3000`)
 
 ### Environment
 
-Create `.env.local` in this folder to override defaults:
+Create `.env.local` to override defaults:
 
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:3000
@@ -74,25 +69,24 @@ NEXT_PUBLIC_SENTRY_ENABLED=false
 # NEXT_PUBLIC_SENTRY_TRACES_SAMPLE_RATE=0
 ```
 
-Variables are validated with zod in `lib/env.ts` (http(s) URLs, Sentry DSN required when enabled); an invalid value fails `next build` / the dev server with a list of every problem. `NEXT_PUBLIC_*` values are inlined at build time, so rebuild after changing them. Sentry (`@sentry/nextjs`) reports browser errors, server request errors (`instrumentation.ts`) and root render crashes (`app/global-error.tsx`).
+`lib/env.ts` validates these with zod: http(s) URLs, and the DSN is required when Sentry is on. An invalid value fails `next build` or the dev server and lists every problem. `NEXT_PUBLIC_*` values are inlined at build time, so rebuild after changing them.
 
-### Local (recommended for UI work)
+### Local
 
 ```bash
-cd qashio-frontend-assignment
 npm install
 npm run dev
 ```
 
-App: [http://localhost:3000](http://localhost:3000)
+App: [http://localhost:3001](http://localhost:3001)
 
-### Docker (from repo root)
+### Docker (from the repo root)
 
 ```bash
 docker compose up -d --build qashio-frontend
 ```
 
-Frontend is mapped to [http://localhost:4000](http://localhost:4000).
+App: [http://localhost:4000](http://localhost:4000)
 
 ---
 
@@ -100,80 +94,13 @@ Frontend is mapped to [http://localhost:4000](http://localhost:4000).
 
 | Command | Description |
 |---------|-------------|
-| `npm run dev` | Next.js dev server |
-| `npm run build` | Production build |
-| `npm start` | Serve production build |
+| `npm run dev` | Dev server on port 3001 |
+| `npm run build` / `npm start` | Production build / serve it |
+| `npm test` | Jest unit tests |
 | `npm run lint` | ESLint |
-| `npm run format` | Prettier write |
-| `npm run format:check` | Prettier check |
+| `npm run format` / `format:check` | Prettier |
 
-Pre-commit (Husky + lint-staged) runs ESLint and Prettier on staged files when hooks are installed via `npm install` / `npm run prepare`.
-
----
-
-## Architecture notes
-
-### Forms
-
-- Shared UI: `Input`, `Select`, `DatePickerField`, `Form`, `FormActions`
-- RHF bindings: `FormInput`, `FormSelectField`, `FormDatePickerField` (use `useFormContext` + `Controller`)
-- Feature form: compose fields in `TransactionForm` with a Zod schema
-
-### API
-
-- Shared Axios instance in `lib/api/http-client.ts`
-  - Base URL from `NEXT_PUBLIC_API_URL`
-  - Default timeout: 15s
-  - Cancellation via `AbortSignal` (pass React Query’s `signal`)
-  - Errors normalized as `ApiError`
-- Feature services call `api.get/post/put/delete` only
-
-### Data fetching
-
-- React Query for server state (`useTransactions`, `useCreateTransaction`)
-- Zustand for UI-only state (e.g. list filters)
-
----
-
-## Starter plan
-
-What is already in place vs what to build next.
-
-### Done (foundation)
-
-- [x] Next.js App Router + MUI providers
-- [x] Feature folder for transactions
-- [x] Shared UI + form field bindings
-- [x] Zod-validated create form (`/transactions/new`)
-- [x] Shared Axios HTTP client
-- [x] Transaction service + React Query hooks
-- [x] Husky / lint-staged / Prettier
-
-### Next — transactions list (`/transactions`)
-
-- [ ] Fetch list with `useTransactions` (pagination: 10 per page)
-- [ ] MUI DataGrid: sortable columns + filters (date range, search)
-- [ ] Row click → detail modal / drawer
-- [ ] Loading skeletons, empty state, error alerts
-- [ ] Align with `Transactions.fig` where practical
-
-### Next — wire create flow fully
-
-- [ ] Ensure Nest `POST /transactions` matches form payload
-- [ ] Invalidate query cache on success (already started in `useCreateTransaction`)
-- [ ] Replace temporary category options with `GET /categories` when API is ready
-
-### Later — categories & budgets (when API modules exist)
-
-- [ ] Categories feature module (list + create)
-- [ ] Budgets feature module (limit vs spending)
-- [ ] Optional: show budget warning after transaction create (event-driven on API)
-
-### Polish (bonus)
-
-- [ ] Unit tests for form schema / key components
-- [ ] Stronger empty / error / loading UX
-- [ ] Remove unused `lowdb` mock once API is the only data source
+Pre-commit (Husky + lint-staged) runs ESLint and Prettier on staged files.
 
 ---
 
@@ -181,13 +108,59 @@ What is already in place vs what to build next.
 
 | Route | Purpose |
 |-------|---------|
-| `/` | Redirects to `/transactions` |
-| `/transactions` | List (in progress) |
-| `/transactions/new` | Create transaction form |
+| `/` | Redirects to the dashboard (or to login) |
+| `/auth/login`, `/auth/register`, `/auth/verify-email` | Sign in, sign up, confirm the email OTP |
+| `/auth/forgot-password`, `/auth/reset-password` | Reset via OTP. The `otpToken` from the request step is kept in `sessionStorage` and sent with the reset |
+| `/dashboard` | Overview |
+| `/accounts`, `/accounts/new`, `/accounts/:id/edit` | Wallets with derived balances; opening balance, default and archive |
+| `/transactions` | Server-side DataGrid: paging, sorting, type / wallet / category / date filters, debounced search, month summary, details drawer |
+| `/transactions/new?type=income\|expense`, `/transactions/:id/edit` | Add or edit income / expense |
+| `/categories`, `/categories/new` | List and create categories |
+| `/budgets`, `/budgets/new`, `/budgets/:id/edit` | Budgets per wallet with usage bars. Several categories can be picked at once (one budget each) |
+| `/change-password` | Change password via OTP |
+
+`middleware.ts` keeps signed-out users out of the dashboard and signed-in users off the auth pages. The API remains the real authorization check.
+
+---
+
+## How it works
+
+### API client (`lib/api/http-client.ts`)
+
+- Base URL from `NEXT_PUBLIC_API_URL`, 15 s timeout, and cancellation through React Query's `AbortSignal`.
+- Every request carries a fresh `X-Request-Id`, reused if the request is retried after a token refresh. Errors become `ApiError` with `status`, the response body in `details`, and `requestId`, so a failure can be found in the API logs.
+- On `401` the client refreshes once and retries. Concurrent requests share a single refresh call.
+
+### Session
+
+The access token lives in memory (Zustand). The refresh token is in a cookie, alongside a flag cookie the middleware reads.
+
+### Adding a transaction (no double saves)
+
+- The form sends an `Idempotency-Key` header (`useIdempotencyKey`). Submitting the same payload again reuses the key: a double click, a retry after a timeout, or "Save anyway". The API then returns the original instead of saving twice. Changing the form starts a new key.
+- If the API answers `409 POSSIBLE_DUPLICATE` (a matching entry was saved in the last 2 minutes), a dialog shows that entry. "Save anyway" resends with `confirmDuplicate: true` and the same key.
+
+### Forms and layout
+
+Forms use React Hook Form with Zod schemas owned by each feature. Every form page uses `FormPage` (a card centred on both axes), and every table or list sits in a `ContentCard`. Amounts are entered and displayed as decimal strings and formatted with `Intl`, which knows each currency's decimals (USD has 2, XAF has 0).
+
+### Server state
+
+React Query hooks per feature. Saving or deleting a transaction invalidates transactions, summaries, wallet balances, budgets and notifications, because budget usage and alerts depend on transactions. The notifications bell polls every 30 s.
+
+---
+
+## Testing
+
+Tests cover critical logic only: env validation, money formatting, and the transaction and budget form schemas and payload mapping.
+
+```bash
+npm test
+```
 
 ---
 
 ## Related
 
-- Backend: `../qashio-api`
-- Repo root: `docker-compose.yml` for full stack (API + Postgres + Redis + frontend)
+- Backend: `../qashio-api` ([schema & diagrams v2](../qashio-api/docs/database-v2.md))
+- Repo root: `docker-compose.yml` (API, Postgres, Redis, frontend)
