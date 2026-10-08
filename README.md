@@ -57,7 +57,7 @@ instrumentation*.ts          # Sentry (browser + server)
 
 ### Environment
 
-Create `.env.local` to override defaults:
+Copy `.env.example` to `.env.local` (`cp .env.example .env.local`); the defaults work for local development:
 
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:3000
