@@ -6,36 +6,100 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { ReactNode, useState } from 'react';
+import { AuthSessionProvider } from './components/AuthSessionProvider';
 
-// Create a custom theme
 const theme = createTheme({
   palette: {
+    mode: 'light',
     primary: {
-      main: '#0063cc',
+      main: '#0f766e',
+      dark: '#115e59',
+      light: '#14b8a6',
+      contrastText: '#ffffff',
     },
     secondary: {
-      main: '#19857b',
+      main: '#0f172a',
     },
     background: {
-      default: '#f8f9fa',
+      default: '#eef3f5',
+      paper: '#ffffff',
+    },
+    text: {
+      primary: '#0f172a',
+      secondary: '#475569',
     },
   },
   typography: {
-    fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
+    fontFamily: 'var(--font-body), "Segoe UI", sans-serif',
+    h1: { fontFamily: 'var(--font-display), Georgia, serif' },
+    h2: { fontFamily: 'var(--font-display), Georgia, serif' },
+    h3: { fontFamily: 'var(--font-display), Georgia, serif' },
+    h4: { fontFamily: 'var(--font-display), Georgia, serif' },
+    h5: { fontFamily: 'var(--font-display), Georgia, serif' },
+    h6: { fontFamily: 'var(--font-display), Georgia, serif' },
+    button: {
+      textTransform: 'none',
+      fontWeight: 600,
+    },
+  },
+  shape: {
+    borderRadius: 6,
+  },
+  components: {
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          borderRadius: 6,
+          boxShadow: 'none',
+          '&:hover': { boxShadow: 'none' },
+        },
+      },
+    },
+    MuiOutlinedInput: {
+      styleOverrides: {
+        root: {
+          borderRadius: 6,
+        },
+      },
+    },
+    MuiChip: {
+      styleOverrides: {
+        root: {
+          borderRadius: 4,
+        },
+      },
+    },
+    MuiAlert: {
+      styleOverrides: {
+        root: {
+          borderRadius: 6,
+        },
+      },
+    },
   },
 });
 
 export function Providers({ children }: Readonly<{ children: ReactNode }>) {
-  const [queryClient] = useState(() => new QueryClient());
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            retry: 1,
+            refetchOnWindowFocus: false,
+          },
+        },
+      }),
+  );
 
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider theme={theme}>
         <LocalizationProvider dateAdapter={AdapterDateFns}>
           <CssBaseline />
-          {children}
+          <AuthSessionProvider>{children}</AuthSessionProvider>
         </LocalizationProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );
-} 
+}
